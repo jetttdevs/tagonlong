@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TagOnLong Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A1310;
+    --surface: #121D18;
+    --surface-2: #18251F;
+    --line: #253328;
+    --ink: #E6EFEA;
+    --muted: #7E9389;
+    --live: #3FD68C;
+    --review: #D2A75B;
+    --stop: #E0727B;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  code, .mono, td.addr { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+  /* Status bar — the most consequential control, so it stays in view. */
+  .statusbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .brand { font-weight: 600; letter-spacing: -0.01em; margin-right: auto; }
+  .brand span { color: var(--muted); font-weight: 400; }
+
+  .state {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--stop); }
+  .state.on .dot { background: var(--live); }
+
+  button {
+    font: inherit; cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+    padding: 7px 14px; border-radius: var(--radius);
+  }
+  button:hover { border-color: #34493B; }
+  button:focus-visible { outline: 2px solid var(--live); outline-offset: 2px; }
+  button.primary { background: var(--live); border-color: var(--live); color: #04180E; font-weight: 500; }
+  button.danger { background: var(--stop); border-color: var(--stop); color: #1F0A0C; font-weight: 500; }
+  button.ghost { background: transparent; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+
+  .shell { display: flex; min-height: calc(100vh - 57px); }
+
+  nav {
+    width: 190px; flex-shrink: 0;
+    border-right: 1px solid var(--line);
+    padding: 16px 10px;
+  }
+  nav a {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-radius: var(--radius);
+    color: var(--muted); text-decoration: none;
+  }
+  nav a:hover { color: var(--ink); background: var(--surface); }
+  nav a.active { color: var(--ink); background: var(--surface-2); }
+  nav a .count {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+    background: var(--review); color: #171103;
+    padding: 1px 6px; border-radius: 10px;
+  }
+
+  main { flex: 1; padding: 24px; min-width: 0; }
+  h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 12px 16px; min-width: 120px;
+  }
+  .stat b { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 500; }
+  .stat small { color: var(--muted); }
+  .stat.alert { border-color: var(--review); }
+  .stat.alert b { color: var(--review); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; font-weight: 500; color: var(--muted);
+    padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:hover td { background: var(--surface); }
+  td.addr { font-size: 12px; color: var(--muted); }
+
+  .tag {
+    display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    padding: 2px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted);
+  }
+  .tag.review { color: var(--review); border-color: var(--review); }
+  .tag.live { color: var(--live); border-color: var(--live); }
+  .tag.stop { color: var(--stop); border-color: var(--stop); }
+
+  .field { margin-bottom: 14px; max-width: 420px; }
+  .field label { display: block; color: var(--muted); margin-bottom: 4px; }
+  .field input[type=text], .field input[type=number], .field textarea {
+    width: 100%; padding: 8px 10px; border-radius: var(--radius);
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+    font: inherit;
+  }
+  .field textarea { min-height: 70px; resize: vertical; }
+  .toggle { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+
+  .notice {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--review);
+    padding: 12px 16px; border-radius: var(--radius); margin-bottom: 20px;
+    color: var(--muted);
+  }
+  .notice strong { color: var(--ink); font-weight: 500; }
+
+  .empty { color: var(--muted); padding: 40px 0; text-align: center; }
+
+  .login { max-width: 380px; margin: 80px auto; text-align: center; }
+  .login p { color: var(--muted); }
+
+  .row-actions { display: flex; gap: 6px; }
+
+  @media (max-width: 720px) {
+    .shell { flex-direction: column; }
+    nav { width: auto; border-right: none; border-bottom: 1px solid var(--line); display: flex; gap: 4px; overflow-x: auto; }
+    main { padding: 16px; }
+    table { font-size: 13px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    button { transition: border-color .12s ease; }
+  }
+</style>
+</head>
+<body>
+
+<div class="statusbar">
+  <div class="brand">TagOnLong Control <span id="chainLabel">— Robinhood Chain</span></div>
+  <div class="state" id="botState"><span class="dot"></span><span id="botStateText">loading</span></div>
+  <button id="killBtn" class="danger" hidden>Pause launches</button>
+  <button id="logoutBtn" class="ghost" hidden>Sign out</button>
+</div>
+
+<div id="loginView" class="login">
+  <h2>Sign in</h2>
+  <p>Connect the admin wallet on the allowlist. You'll sign a message — no transaction, no approval.</p>
+  <button class="primary" id="loginBtn">Connect wallet</button>
+  <p id="loginError" style="color:var(--stop)"></p>
+</div>
+
+<div class="shell" id="appView" hidden>
+  <nav>
+    <a href="#overview" class="active">Overview</a>
+    <a href="#review">Review <span class="count" id="reviewCount" hidden>0</span></a>
+    <a href="#launches">Tokens</a>
+    <a href="#accounts">Accounts</a>
+    <a href="#terms">Blocklist</a>
+    <a href="#settings">Settings</a>
+    <a href="#audit">Audit log</a>
+  </nav>
+  <main id="view"></main>
+</div>
+
+<script type="module">
+const API = '/api/admin';
+let token = localStorage.getItem('admin_token');
+let settings = null;
+
+// --- helpers ---------------------------------------------------------------
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(opts.headers || {}),
+    },
+  });
+  if (res.status === 401 || res.status === 403) { signOut(); throw new Error('Session ended.'); }
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `Request failed (${res.status})`);
+  return res.json();
+}
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const short = (a) => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—';
+const when = (d) => new Date(d).toLocaleString();
+
+// --- auth ------------------------------------------------------------------
+
+async function signIn() {
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  if (!window.ethereum) { err.textContent = 'No wallet found in this browser.'; return; }
+
+  try {
+    const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const { message } = await (await fetch(`${API}/challenge`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ address }),
+    })).json();
+
+    const signature = await window.ethereum.request({
+      method: 'personal_sign', params: [message, address],
+    });
+
+    const res = await fetch(`${API}/verify`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ address, message, signature }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'Sign-in failed.');
+
+    token = body.token;
+    localStorage.setItem('admin_token', token);
+    start();
+  } catch (e) {
+    err.textContent = e.message;
+  }
+}
+
+function signOut() {
+  token = null;
+  localStorage.removeItem('admin_token');
+  document.getElementById('appView').hidden = true;
+  document.getElementById('loginView').hidden = false;
+  document.getElementById('killBtn').hidden = true;
+  document.getElementById('logoutBtn').hidden = true;
+}
+
+// --- status ----------------------------------------------------------------
+
+async function refreshStatus() {
+  settings = await api('/settings');
+  const on = settings.botEnabled;
+  const state = document.getElementById('botState');
+  state.classList.toggle('on', on);
+  document.getElementById('botStateText').textContent = on ? 'accepting launches' : 'paused';
+  const kill = document.getElementById('killBtn');
+  kill.hidden = false;
+  kill.textContent = on ? 'Pause launches' : 'Resume launches';
+  kill.className = on ? 'danger' : 'primary';
+}
+
+async function toggleBot() {
+  await api('/settings', {
+    method: 'PATCH',
+    body: JSON.stringify({ botEnabled: !settings.botEnabled }),
+  });
+  await refreshStatus();
+  route();
+}
+
+// --- views -----------------------------------------------------------------
+
+const views = {};
+
+views.overview = async () => {
+  const s = await api('/stats');
+  document.getElementById('reviewCount').textContent = s.needsReview;
+  document.getElementById('reviewCount').hidden = s.needsReview === 0;
+
+  return `
+    <h2>Overview</h2>
+    <p class="sub">Every token the Long.xyz factory has created, plus what came through your bot.</p>
+    <div class="stats">
+      <div class="stat"><b>${s.launches}</b><small>tokens indexed</small></div>
+      <div class="stat"><b>${s.viaPlatform}</b><small>via your bot</small></div>
+      <div class="stat ${s.needsReview ? 'alert' : ''}"><b>${s.needsReview}</b><small>awaiting review</small></div>
+      <div class="stat"><b>${s.queued}</b><small>queued</small></div>
+      <div class="stat"><b>${s.failed24h}</b><small>failed (24h)</small></div>
+      <div class="stat"><b>${s.accounts}</b><small>X accounts</small></div>
+      
+    </div>
+    <div class="notice">
+      <strong>Wallets here are addresses, not keys.</strong> Each one was linked by its owner
+      signing a message. The platform can read who owns what and pay fees to the right place;
+      it cannot sign for anyone. Hiding a token affects this site only — the Long.xyz
+      contracts are permissionless and nothing here reaches a token already on chain.
+    </div>`;
+};
+
+views.review = async () => {
+  const rows = await api('/requests?status=NEEDS_REVIEW');
+  if (!rows.length) return `<h2>Review</h2><p class="sub">Requests held for a decision.</p>
+    <div class="empty">Nothing waiting. New requests appear here when approval is required.</div>`;
+
+  return `
+    <h2>Review</h2>
+    <p class="sub">Approve to queue the launch, or reject with a reason the bot will reply.</p>
+    <table><thead><tr>
+      <th>Token</th><th>From</th><th>Creator wallet</th><th>Tweet</th><th></th>
+    </tr></thead><tbody>
+    ${rows.map((r) => `<tr>
+      <td><strong>${esc(r.name)}</strong><br><span class="tag">$${esc(r.symbol)}</span></td>
+      <td>@${esc(r.xAccount?.handle)}<br><small style="color:var(--muted)">${r.xAccount?.followers ?? 0} followers</small></td>
+      <td class="addr">${short(r.creatorWallet)}</td>
+      <td><a href="https://x.com/i/status/${esc(r.tweetId)}" target="_blank" rel="noopener" style="color:var(--live)">open</a><br><small style="color:var(--muted)">${when(r.createdAt)}</small></td>
+      <td><div class="row-actions">
+        <button class="primary" data-approve="${r.id}">Approve</button>
+        <button data-reject="${r.id}">Reject</button>
+      </div></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+};
+
+views.launches = async () => {
+  const rows = await api('/launches');
+  if (!rows.length) return `<h2>Tokens</h2><p class="sub">Indexed from the Long.xyz factory.</p>
+    <div class="empty">No tokens indexed yet. Check the indexer is running and LONG_FACTORY_DEPLOY_BLOCK is set.</div>`;
+
+  return `
+    <h2>Tokens</h2>
+    <p class="sub">Everything the factory created, whether or not it came through your bot.</p>
+    <table><thead><tr>
+      <th>Token</th><th>Asset</th><th>Creator</th><th>Epoch ends</th><th>Source</th><th></th>
+    </tr></thead><tbody>
+    ${rows.map((r) => `<tr>
+      <td><strong>${esc(r.name || '—')}</strong>${r.symbol ? ` <span class="tag">$${esc(r.symbol)}</span>` : ''}
+        ${r.hidden ? '<span class="tag stop">hidden</span>' : ''}</td>
+      <td class="addr">${short(r.assetAddress)}</td>
+      <td class="addr">${r.xAccount?.handle ? '@' + esc(r.xAccount.handle) : short(r.creator)}</td>
+      <td class="addr">${r.epochEnd ? new Date(Number(r.epochEnd) * 1000).toLocaleDateString() : '—'}</td>
+      <td>${r.viaPlatform ? '<span class="tag live">bot</span>' : '<span class="tag">external</span>'}</td>
+      <td><button data-hide="${r.id}" data-hidden="${r.hidden}">${r.hidden ? 'Unhide' : 'Hide'}</button></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+};
+
+views.accounts = async () => {
+  const rows = await api('/accounts');
+  if (!rows.length) return `<h2>Accounts</h2><div class="empty">No accounts yet.</div>`;
+
+  return `
+    <h2>Accounts</h2>
+    <p class="sub">X accounts that have mentioned the bot, and the wallets they proved they control.</p>
+    <table><thead><tr>
+      <th>Handle</th><th>Wallets</th><th>Launches</th><th>Status</th><th></th>
+    </tr></thead><tbody>
+    ${rows.map((a) => `<tr>
+      <td>@${esc(a.handle)}<br><small style="color:var(--muted)">${a.followers} followers</small></td>
+      <td class="addr">${a.wallets.length ? a.wallets.map((w) => short(w.address)).join('<br>') : '<span style="color:var(--muted)">none linked</span>'}</td>
+      <td class="mono">${a._count.launches}</td>
+      <td>${a.blocked ? '<span class="tag stop">blocked</span>' : a.trusted ? '<span class="tag live">trusted</span>' : '<span class="tag">normal</span>'}</td>
+      <td><div class="row-actions">
+        <button data-block="${a.id}" data-blocked="${a.blocked}">${a.blocked ? 'Unblock' : 'Block'}</button>
+        <button data-trust="${a.id}" data-trusted="${a.trusted}">${a.trusted ? 'Untrust' : 'Trust'}</button>
+      </div></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+};
+
+views.terms = async () => {
+  const rows = await api('/terms');
+  return `
+    <h2>Blocklist</h2>
+    <p class="sub">Names and tickers refused at parse time, before anything reaches the chain.</p>
+    <div class="field">
+      <label for="newTerm">Add a term</label>
+      <input type="text" id="newTerm" placeholder="e.g. a ticker you don't want impersonated">
+    </div>
+    <div class="field">
+      <label for="newKind">Match against</label>
+      <select id="newKind" style="padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit">
+        <option value="symbol">ticker (exact)</option>
+        <option value="name">name (exact)</option>
+        <option value="word">word (substring)</option>
+      </select>
+    </div>
+    <button class="primary" id="addTerm">Add term</button>
+    ${rows.length ? `<table style="margin-top:24px"><thead><tr><th>Term</th><th>Match</th><th>Reason</th><th></th></tr></thead><tbody>
+      ${rows.map((t) => `<tr>
+        <td class="mono">${esc(t.term)}</td>
+        <td><span class="tag">${esc(t.kind)}</span></td>
+        <td style="color:var(--muted)">${esc(t.reason || '—')}</td>
+        <td><button data-delterm="${t.id}">Remove</button></td>
+      </tr>`).join('')}
+    </tbody></table>` : '<div class="empty">No blocked terms.</div>'}`;
+};
+
+views.settings = async () => {
+  const s = await api('/settings');
+  return `
+    <h2>Settings</h2>
+    <p class="sub">Changes take effect immediately — no redeploy.</p>
+
+    <div class="toggle"><input type="checkbox" id="requireApproval" ${s.requireApproval ? 'checked' : ''}>
+      <label for="requireApproval">Hold every request for manual review</label></div>
+    <div class="toggle"><input type="checkbox" id="autoApproveTrusted" ${s.autoApproveTrusted ? 'checked' : ''}>
+      <label for="autoApproveTrusted">Let trusted accounts skip review</label></div>
+
+    <div class="field"><label for="maxPerUserPerDay">Launches per account per day</label>
+      <input type="number" id="maxPerUserPerDay" value="${s.maxPerUserPerDay}"></div>
+    <div class="field"><label for="maxGlobalPerDay">Launches across everyone per day</label>
+      <input type="number" id="maxGlobalPerDay" value="${s.maxGlobalPerDay}"></div>
+    <div class="field"><label for="minAccountAgeDays">Minimum account age (days)</label>
+      <input type="number" id="minAccountAgeDays" value="${s.minAccountAgeDays}"></div>
+    <div class="field"><label for="minFollowers">Minimum followers</label>
+      <input type="number" id="minFollowers" value="${s.minFollowers}"></div>
+
+    <div class="field"><label for="platformFeeBps">Platform fee (basis points)</label>
+      <input type="number" id="platformFeeBps" value="${s.platformFeeBps}"></div>
+    <div class="field"><label for="treasuryAddress">Treasury address</label>
+      <input type="text" id="treasuryAddress" class="mono" value="${esc(s.treasuryAddress || '')}" placeholder="0x…"></div>
+
+    <button class="primary" id="saveSettings">Save changes</button>
+    <span id="saveMsg" style="margin-left:12px;color:var(--live)"></span>`;
+};
+
+views.audit = async () => {
+  const rows = await api('/audit');
+  if (!rows.length) return `<h2>Audit log</h2><div class="empty">No actions recorded yet.</div>`;
+  return `
+    <h2>Audit log</h2>
+    <p class="sub">Every admin write, append-only.</p>
+    <table><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th></tr></thead><tbody>
+    ${rows.map((a) => `<tr>
+      <td style="color:var(--muted)">${when(a.createdAt)}</td>
+      <td class="addr">${short(a.actor)}</td>
+      <td class="mono">${esc(a.action)}</td>
+      <td class="addr">${esc(a.target || '—')}</td>
+    </tr>`).join('')}
+    </tbody></table>`;
+};
+
+// --- routing + actions -----------------------------------------------------
+
+async function route() {
+  const name = (location.hash.slice(1) || 'overview');
+  document.querySelectorAll('nav a').forEach((a) =>
+    a.classList.toggle('active', a.getAttribute('href') === '#' + name));
+
+  const view = document.getElementById('view');
+  try {
+    view.innerHTML = await (views[name] || views.overview)();
+  } catch (e) {
+    view.innerHTML = `<h2>Couldn't load this</h2><p class="sub">${esc(e.message)}</p>`;
+  }
+}
+
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('button');
+  if (!t) return;
+
+  try {
+    if (t.dataset.approve) {
+      await api(`/requests/${t.dataset.approve}/approve`, { method: 'POST' });
+      route();
+    } else if (t.dataset.reject) {
+      const reason = prompt('Reason (the bot replies with this):');
+      if (!reason) return;
+      await api(`/requests/${t.dataset.reject}/reject`, {
+        method: 'POST', body: JSON.stringify({ reason }),
+      });
+      route();
+    } else if (t.dataset.hide) {
+      const hidden = t.dataset.hidden !== 'true';
+      await api(`/launches/${t.dataset.hide}/hide`, {
+        method: 'POST', body: JSON.stringify({ hidden, reason: hidden ? 'Hidden by admin' : undefined }),
+      });
+      route();
+    } else if (t.dataset.block) {
+      const blocked = t.dataset.blocked !== 'true';
+      await api(`/accounts/${t.dataset.block}/flags`, {
+        method: 'POST', body: JSON.stringify({ blocked, reason: blocked ? 'Blocked by admin' : undefined }),
+      });
+      route();
+    } else if (t.dataset.trust) {
+      await api(`/accounts/${t.dataset.trust}/flags`, {
+        method: 'POST', body: JSON.stringify({ trusted: t.dataset.trusted !== 'true' }),
+      });
+      route();
+    } else if (t.dataset.delterm) {
+      await api(`/terms/${t.dataset.delterm}`, { method: 'DELETE' });
+      route();
+    } else if (t.id === 'addTerm') {
+      const term = document.getElementById('newTerm').value.trim();
+      if (!term) return;
+      await api('/terms', {
+        method: 'POST',
+        body: JSON.stringify({ term, kind: document.getElementById('newKind').value }),
+      });
+      route();
+    } else if (t.id === 'saveSettings') {
+      const num = (id) => Number(document.getElementById(id).value);
+      const str = (id) => document.getElementById(id).value;
+      const bool = (id) => document.getElementById(id).checked;
+      await api('/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          requireApproval: bool('requireApproval'),
+          autoApproveTrusted: bool('autoApproveTrusted'),
+          maxPerUserPerDay: num('maxPerUserPerDay'),
+          maxGlobalPerDay: num('maxGlobalPerDay'),
+          minAccountAgeDays: num('minAccountAgeDays'),
+          minFollowers: num('minFollowers'),
+          platformFeeBps: num('platformFeeBps'),
+          treasuryAddress: str('treasuryAddress') || null,
+        }),
+      });
+      document.getElementById('saveMsg').textContent = 'Saved';
+      setTimeout(() => { const m = document.getElementById('saveMsg'); if (m) m.textContent = ''; }, 2000);
+    }
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('loginBtn').addEventListener('click', signIn);
+document.getElementById('logoutBtn').addEventListener('click', signOut);
+document.getElementById('killBtn').addEventListener('click', toggleBot);
+window.addEventListener('hashchange', route);
+
+async function start() {
+  try {
+    await refreshStatus();
+    document.getElementById('loginView').hidden = true;
+    document.getElementById('appView').hidden = false;
+    document.getElementById('logoutBtn').hidden = false;
+    await route();
+  } catch {
+    signOut();
+  }
+}
+
+if (token) start();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+contracts/out/
+contracts/cache/
+contracts/lib/
+contracts/broadcast/
+*.log
+.DS_Store
+.vscode/
+.idea/

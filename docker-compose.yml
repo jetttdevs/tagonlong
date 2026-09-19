@@ -1,0 +1,28 @@
+# Local development. Postgres and Redis only — run the app with `npm run dev`.
+# For a full self-hosted deploy, build the Dockerfile and run four containers
+# with PROCESS set to api, indexer, bot and worker.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tagonlong
+      POSTGRES_PASSWORD: tagonlong
+      POSTGRES_DB: tagonlong
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tagonlong"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: [redisdata:/data]
+
+volumes:
+  pgdata:
+  redisdata:

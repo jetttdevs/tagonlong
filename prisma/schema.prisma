@@ -1,0 +1,171 @@
+// TagOnLong data model.
+//
+// Rule that runs through all of it: no private key, seed phrase, or anything
+// derived from one is ever stored. There is no column an operator could read to
+// move someone else's funds, and none should be added.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model XAccount {
+  id          String   @id @default(cuid())
+  xUserId     String   @unique // stable numeric id; handles get renamed, ids don't
+  handle      String   @unique // lowercased, no leading @
+  displayName String?
+  avatarUrl   String?
+  followers   Int      @default(0)
+  createdAtX  DateTime?
+
+  blocked     Boolean  @default(false)
+  blockReason String?
+  trusted     Boolean  @default(false) // skips the review queue
+
+  requests    LaunchRequest[]
+  launches    Launch[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([blocked])
+}
+
+enum RequestStatus {
+  PENDING
+  NEEDS_REVIEW
+  APPROVED
+  REJECTED
+  LAUNCHING
+  LAUNCHED
+  FAILED
+}
+
+// One row per mention that parses as a launch. tweetId is unique, which is what
+// makes the whole pipeline idempotent: a replayed mention cannot deploy twice.
+model LaunchRequest {
+  id            String        @id @default(cuid())
+  tweetId       String        @unique
+  rawText       String
+  xAccountId    String
+  xAccount      XAccount      @relation(fields: [xAccountId], references: [id])
+
+  name          String?
+  symbol        String?
+  // Where the creator's asset and fee share go: their fee vault, derived from
+  // their X id. Never an address the platform controls.
+  creatorWallet String?
+
+  status        RequestStatus @default(PENDING)
+  statusReason  String?
+  // Hash of the broadcast transaction — the join key the indexer uses to tie a
+  // Created event back to the request that caused it.
+  txHash        String?       @unique
+
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  attempts      Int           @default(0)
+
+  launch        Launch?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+// A token on chain. Written by the indexer for every Created event on the
+// factory, including launches made outside this platform.
+model Launch {
+  id           String   @id @default(cuid())
+  assetAddress String   @unique
+  txHash       String?
+  blockNumber  BigInt?
+
+  // From Long.xyz: Created(address indexed asset, address hook, address creator,
+  //   bytes32 poolId, uint256 epochStart, uint256 epochEnd, string name)
+  hook         String?
+  creator      String
+  poolId       String?
+  epochStart   BigInt?
+  epochEnd     BigInt?
+  name         String?
+  symbol       String?
+
+  // From Airlock.getAssetData(asset)
+  numeraire    String?
+  timelock     String?
+  governance   String?
+  pool         String?
+
+  requestId    String?        @unique
+  request      LaunchRequest? @relation(fields: [requestId], references: [id])
+  viaPlatform  Boolean        @default(false)
+
+  // Hides a token from this site only. It has no on-chain effect — the Long.xyz
+  // contracts are permissionless and nothing here can freeze or seize a token.
+  hidden       Boolean  @default(false)
+  hiddenReason String?
+
+  xAccountId   String?
+  xAccount     XAccount? @relation(fields: [xAccountId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([creator])
+  @@index([viaPlatform, createdAt])
+}
+
+// Issued when an account tweets `claim 0x…`. Stored rather than re-derived on
+// demand: the address it authorises came from a tweet whose author X vouched
+// for. Rebuilding it from a web request would mean trusting the requester to
+// name the address — exactly what the tweet is proving.
+model ClaimAttestation {
+  id        String   @id @default(cuid())
+  xUserId   String   @unique
+  owner     String
+  vault     String
+  deadline  BigInt
+  nonce     String
+  signature String
+  tweetId   String
+  createdAt DateTime @default(now())
+}
+
+model IndexerCursor {
+  name      String   @id
+  lastBlock BigInt
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}
+
+// Append-only. Nothing in the admin panel writes without leaving a row here.
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  target    String?
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model BlockedTerm {
+  id        String   @id @default(cuid())
+  term      String   @unique // lowercased
+  kind      String   @default("symbol") // symbol | name | word
+  reason    String?
+  createdAt DateTime @default(now())
+}

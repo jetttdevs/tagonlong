@@ -1,0 +1,901 @@
+<title>TagOnLong</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    /* Light. Neutrals carry a green bias so they read as chosen, not inherited. */
+    --ground: #F4F8F5;
+    --surface: #FFFFFF;
+    --surface-2: #E9F0EB;
+    --line: #D3E0D7;
+    --line-soft: #E2EAE4;
+    --ink: #0F1F19;
+    --muted: #52665C;
+
+    /* Verdigris — the brand, and the signal for a launch still open. */
+    --green: #0E7A4B;
+    --green-bright: #0E7A4B;
+    --green-bg: rgba(14, 122, 75, 0.11);
+    --on-green: #F2FBF6;
+
+    /* Brass — a launch that has closed. Patina and brass, not green and grey. */
+    --brass: #87621E;
+    --brass-bg: rgba(135, 98, 30, 0.12);
+
+    --stop: #A93843;
+
+    --display: 'Bricolage Grotesque', Georgia, serif;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+    --max: 1080px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0A1310;
+      --surface: #121D18;
+      --surface-2: #18251F;
+      --line: #253328;
+      --line-soft: #1D2922;
+      --ink: #E6EFEA;
+      --muted: #7E9389;
+
+      --green: #3FD68C;
+      --green-bright: #3FD68C;
+      --green-bg: rgba(63, 214, 140, 0.12);
+      --on-green: #04180E;
+
+      --brass: #D2A75B;
+      --brass-bg: rgba(210, 167, 91, 0.12);
+
+      --stop: #E0727B;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0A1310;
+    --surface: #121D18;
+    --surface-2: #18251F;
+    --line: #253328;
+    --line-soft: #1D2922;
+    --ink: #E6EFEA;
+    --muted: #7E9389;
+
+    --green: #3FD68C;
+    --green-bright: #3FD68C;
+    --green-bg: rgba(63, 214, 140, 0.12);
+    --on-green: #04180E;
+
+    --brass: #D2A75B;
+    --brass-bg: rgba(210, 167, 91, 0.12);
+
+    --stop: #E0727B;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--max); margin: 0 auto; padding-inline: 20px; }
+
+  h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- header ---------- */
+
+  header {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .bar { display: flex; align-items: center; gap: 14px; padding-block: 13px; }
+
+  .logo {
+    display: flex; align-items: center; gap: 9px;
+    font-family: var(--display); font-weight: 800; font-size: 19px;
+    letter-spacing: -0.025em; margin-right: auto;
+  }
+  .logo svg { display: block; flex-shrink: 0; }
+
+  .chainchip {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 100px; padding: 3px 10px;
+    white-space: nowrap;
+  }
+  @media (max-width: 520px) { .chainchip { display: none; } }
+
+  .themebtn {
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+    border-radius: 100px; width: 34px; height: 34px; cursor: pointer;
+    font-size: 15px; line-height: 1; display: grid; place-items: center;
+  }
+  .themebtn:hover { color: var(--ink); border-color: var(--green); }
+  .themebtn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+  /* ---------- hero ---------- */
+
+  .hero { padding-block: 56px 40px; }
+
+  .kicker {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    color: var(--green); margin-bottom: 18px;
+  }
+
+  .hero h1 {
+    font-size: clamp(34px, 6vw, 58px);
+    line-height: 1.04; letter-spacing: -0.035em; max-width: 16ch;
+  }
+  .hero h1 .clock { color: var(--green); }
+
+  .lede { margin-top: 20px; max-width: 58ch; color: var(--muted); font-size: 17px; }
+
+  /* The composer is the hero's one interactive element, so it gets the width it
+     needs to read as a real compose box and no more. */
+  .herogrid { margin-top: 40px; max-width: 620px; }
+
+  /* ---------- composer ---------- */
+
+  .composer {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; overflow: hidden;
+  }
+  .composer-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line-soft);
+    font-size: 13px; color: var(--muted);
+  }
+  .composer-head .dotrow { display: flex; gap: 5px; margin-right: 4px; }
+  .composer-head .dotrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: block; }
+  .composer-head .dotrow i:first-child { background: var(--green); }
+  .composer-body { padding: 16px; display: grid; gap: 14px; }
+
+  .field label {
+    display: block; font-size: 12px; font-family: var(--mono);
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%; padding: 10px 12px; font: inherit;
+    background: var(--ground); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px;
+  }
+  .field input:focus-visible { outline: 2px solid var(--green); outline-offset: 1px; border-color: transparent; }
+  .fieldrow { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; }
+  @media (max-width: 460px) { .fieldrow { grid-template-columns: 1fr; } }
+
+  .preview {
+    background: var(--ground); border: 1px dashed var(--line);
+    border-radius: 10px; padding: 14px;
+    font-family: var(--mono); font-size: 14px; line-height: 1.6; word-break: break-word;
+  }
+  .preview .handle { color: var(--green); }
+  .preview .tick { color: var(--brass); }
+
+  .hint { font-size: 13px; color: var(--muted); min-height: 20px; }
+  .hint.bad { color: var(--stop); }
+
+  .btn {
+    font: inherit; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--green); background: var(--green);
+    color: var(--on-green); padding: 10px 18px; border-radius: 8px;
+  }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .btn[disabled] { opacity: .45; cursor: not-allowed; }
+  .btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn.ghost:hover { border-color: var(--green); }
+  .btnrow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  .btn.small { padding: 6px 12px; font-size: 14px; }
+
+  /* ---------- sections ---------- */
+
+  section { padding-block: 44px; }
+  .sechead { margin-bottom: 28px; }
+  .sechead h2 { font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -0.025em; }
+  .sechead p { color: var(--muted); margin-top: 8px; max-width: 60ch; }
+
+  .steps {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--line-soft); border: 1px solid var(--line-soft);
+    border-radius: 12px; overflow: hidden;
+  }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+  .step { background: var(--ground); padding: 22px; }
+  .step .n { font-family: var(--mono); font-size: 12px; color: var(--green); margin-bottom: 10px; }
+  .step h3 { font-size: 17px; margin-bottom: 8px; letter-spacing: -0.015em; }
+  .step p { font-size: 14px; color: var(--muted); }
+
+  /* ---------- tokens ---------- */
+
+  .notice {
+    display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;
+    background: var(--brass-bg);
+    border: 1px solid color-mix(in srgb, var(--brass) 38%, transparent);
+    border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 20px;
+  }
+  .notice b { font-weight: 600; }
+
+  .tokens { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 14px; }
+
+  .token {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .token-top { display: flex; align-items: flex-start; gap: 12px; }
+  .token-name { font-family: var(--display); font-size: 18px; font-weight: 700; letter-spacing: -0.015em; }
+  .token-by { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .ticker {
+    margin-left: auto; font-family: var(--mono); font-size: 12px; font-weight: 500;
+    padding: 3px 9px; border-radius: 6px; white-space: nowrap;
+    background: var(--surface-2); color: var(--muted);
+  }
+
+  .state {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
+    padding: 3px 9px; border-radius: 100px; width: fit-content;
+  }
+  .state.running { background: var(--green-bg); color: var(--green); }
+  .state.settled { background: var(--brass-bg); color: var(--brass); }
+  .state i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: block; }
+
+  .token-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+  }
+
+  /* ---------- leaderboard ---------- */
+
+  .board { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .boardrow {
+    display: grid; grid-template-columns: 34px 1fr auto auto;
+    gap: 14px; align-items: center; padding: 14px 18px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .boardrow:last-child { border-bottom: none; }
+  .boardrow .rank { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .boardrow:first-child .rank { color: var(--green); }
+  .boardrow .who { font-weight: 500; }
+  .boardrow .addr { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .boardrow .num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; }
+  @media (max-width: 560px) {
+    .boardrow { grid-template-columns: 28px 1fr auto; }
+    .boardrow .addr { display: none; }
+  }
+
+  /* ---------- custody ---------- */
+
+  .custody {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--green);
+    border-radius: 12px; padding: 24px;
+  }
+  .custody h2 { font-size: 22px; letter-spacing: -0.025em; margin-bottom: 12px; }
+  .custody p { color: var(--muted); font-size: 15px; max-width: 68ch; }
+  .custody p + p { margin-top: 12px; }
+
+  /* ---------- footer ---------- */
+
+  footer { border-top: 1px solid var(--line-soft); padding-block: 28px 44px; font-size: 13px; color: var(--muted); }
+  .footrow { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .footrow .sep { margin-left: auto; }
+  footer a { color: var(--green); }
+  footer code { font-family: var(--mono); font-size: 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- mode switch ---------- */
+
+  .modes {
+    display: inline-flex; gap: 2px; padding: 3px;
+    background: var(--surface-2); border-radius: 9px; margin-bottom: 4px;
+  }
+  .modes button {
+    font: inherit; font-size: 14px; cursor: pointer;
+    border: none; background: transparent; color: var(--muted);
+    padding: 6px 14px; border-radius: 7px;
+  }
+  .modes button[aria-selected="true"] { background: var(--surface); color: var(--ink); font-weight: 500; }
+  .modes button:focus-visible { outline: 2px solid var(--green); outline-offset: 1px; }
+
+  /* ---------- empty + loading states ---------- */
+
+  .state-block {
+    border: 1px dashed var(--line); border-radius: 12px;
+    padding: 40px 24px; text-align: center; color: var(--muted);
+  }
+  .state-block h3 {
+    font-size: 17px; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.015em;
+  }
+  .state-block p { max-width: 46ch; margin-inline: auto; font-size: 14px; }
+  .state-block code {
+    font-family: var(--mono); font-size: 13px;
+    background: var(--surface-2); padding: 2px 6px; border-radius: 4px;
+  }
+
+  /* ---------- token detail ---------- */
+
+  .token { cursor: pointer; }
+  .token:hover { border-color: var(--green); }
+  .token:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+  dialog {
+    border: 1px solid var(--line); border-radius: 14px; padding: 0;
+    background: var(--surface); color: var(--ink);
+    max-width: 560px; width: calc(100% - 32px);
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, .55); }
+
+  .sheet-head {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 20px; border-bottom: 1px solid var(--line-soft);
+  }
+  .sheet-head h3 { font-size: 21px; letter-spacing: -0.02em; }
+  .sheet-head .sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .sheet-close {
+    margin-left: auto; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); border-radius: 100px; width: 30px; height: 30px;
+    cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0;
+  }
+  .sheet-close:hover { color: var(--ink); }
+
+  .facts { padding: 8px 20px 20px; }
+  .fact {
+    display: grid; grid-template-columns: 130px 1fr; gap: 14px;
+    padding: 11px 0; border-bottom: 1px solid var(--line-soft);
+    font-size: 14px; align-items: baseline;
+  }
+  .fact:last-child { border-bottom: none; }
+  .fact dt { color: var(--muted); }
+  .fact dd { margin: 0; font-family: var(--mono); font-size: 13px; word-break: break-all; }
+  .fact dd a { color: var(--green); }
+  @media (max-width: 460px) { .fact { grid-template-columns: 1fr; gap: 2px; } }
+
+  .sheet-foot {
+    padding: 16px 20px; border-top: 1px solid var(--line-soft);
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+</style>
+
+<header>
+  <div class="wrap bar">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12.6 2.6H20a1.4 1.4 0 0 1 1.4 1.4v7.4a2 2 0 0 1-.59 1.42l-7.99 7.99a2 2 0 0 1-2.83 0l-6.4-6.4a2 2 0 0 1 0-2.83l7.99-7.99a2 2 0 0 1 1.42-.59Z"
+              stroke="var(--green)" stroke-width="1.7" stroke-linejoin="round" fill="var(--green-bg)"/>
+        <circle cx="16.8" cy="7.2" r="1.7" fill="var(--green)"/>
+      </svg>
+      TagOnLong
+    </div>
+    <div class="chainchip">Robinhood Chain &middot; 4663</div>
+    <button class="themebtn" id="themeBtn" aria-label="Switch theme">&#9689;</button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div class="kicker">TAG &rarr; PARSE &rarr; DEPLOY</div>
+    <h1>Launch a token by tweeting. It closes <span class="clock">on a clock.</span></h1>
+    <p class="lede">
+      Tag TagOnLong on X with a name and a ticker. It validates, deploys through Long.xyz on
+      Robinhood Chain, and replies in your thread with the contract. No login, no wallet
+      connection &mdash; your post is the proof.
+    </p>
+
+    <div class="herogrid">
+      <div class="composer">
+        <div class="composer-head">
+          <span class="dotrow"><i></i><i></i><i></i></span>
+          Compose your post
+        </div>
+        <div class="composer-body">
+          <div class="modes" role="tablist" aria-label="What to post">
+            <button role="tab" id="modeLaunch" aria-selected="true">Launch a token</button>
+            <button role="tab" id="modeClaim" aria-selected="false">Claim fees</button>
+          </div>
+
+          <div id="launchFields">
+            <div class="fieldrow">
+              <div class="field">
+                <label for="tokenName">TOKEN NAME</label>
+                <input type="text" id="tokenName" value="Paper Hands" maxlength="32" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="tokenTicker">TICKER</label>
+                <input type="text" id="tokenTicker" value="PAPER" maxlength="10" autocomplete="off">
+              </div>
+            </div>
+          </div>
+
+          <div id="claimFields" hidden>
+            <div class="field">
+              <label for="payoutAddress">PAY MY FEES TO</label>
+              <input type="text" id="payoutAddress" class="mono" placeholder="0x…" autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+
+          <div class="preview" id="preview"></div>
+          <div class="hint" id="hint"></div>
+
+          <div class="btnrow">
+            <button class="btn" id="copyBtn">Copy this post</button>
+            <button class="btn ghost" id="feesBtn">How fees work</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section>
+      <div class="sechead">
+        <h2>Three steps, in order</h2>
+        <p>No signup, no login, no wallet connection. Everything happens from your X account, and your fees wait at an address that is already yours.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="n">01</div>
+          <h3>Post the tag</h3>
+          <p>Mention TagOnLong with a name in quotes and a ticker with a dollar sign. The parser is strict: one ticker, 2&ndash;10 characters, starting with a letter.</p>
+        </div>
+        <div class="step">
+          <div class="n">02</div>
+          <h3>Get the reply</h3>
+          <p>The bot deploys through Long.xyz and replies in your thread with the contract address and a link to the explorer. Usually inside a minute.</p>
+        </div>
+        <div class="step">
+          <div class="n">03</div>
+          <h3>Claim your fees</h3>
+          <p>Tag the bot with <span class="mono">claim</span> and the address you want paid. The post itself is the proof, because X tells the bot who sent it.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sechead">
+        <h2>Recent launches</h2>
+        <p>Every token the Long.xyz factory has created, whether or not it came through TagOnLong. Select one for its contract details.</p>
+      </div>
+      <div id="tokensHost">
+        <div class="state-block" id="tokensState">
+          <h3>Loading launches</h3>
+          <p>Reading the Long.xyz factory.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sechead">
+        <h2>Creators</h2>
+        <p>Ranked by launches, built from public chain data. A handle appears once that creator has claimed their fee address.</p>
+      </div>
+      <div id="boardHost"></div>
+    </section>
+
+    <section>
+      <div class="custody" id="custody">
+        <h2>Your fees have an address before you do</h2>
+        <p>
+          Every account gets its own fee contract, derived from your X account id. It exists
+          before you have done anything, which is why you can launch without connecting a wallet
+          first. Your share goes straight there.
+        </p>
+        <p>
+          No private key controls that contract &mdash; not yours, and not ours. TagOnLong cannot
+          withdraw from it, cannot redirect what is already in it, and cannot pay itself from it.
+          To claim, you tag the bot with the address you want paid, then send one transaction
+          from that wallet. Until then the fees sit there. Nothing expires.
+        </p>
+        <p>
+          If this site disappeared tomorrow, your token and your fees keep working. The contracts
+          are permissionless, and nothing here can freeze, seize, or claw back a token that
+          already exists.
+        </p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<dialog id="sheet" aria-labelledby="sheetName">
+  <div class="sheet-head">
+    <div>
+      <h3 id="sheetName">&mdash;</h3>
+      <div class="sub" id="sheetBy"></div>
+    </div>
+    <button class="sheet-close" id="sheetClose" aria-label="Close">&times;</button>
+  </div>
+  <dl class="facts" id="sheetFacts"></dl>
+  <div class="sheet-foot">
+    <a class="btn" id="sheetExplorer" target="_blank" rel="noopener">View on explorer</a>
+    <button class="btn ghost" id="sheetCopy">Copy address</button>
+  </div>
+</dialog>
+
+<footer>
+  <div class="wrap footrow">
+    <span>Built on <a href="https://docs.robinhood.com/chain/" target="_blank" rel="noopener">Robinhood Chain</a> &middot; Long.xyz factory <code>0x22e9&hellip;eeed</code></span>
+    <span class="sep"></span>
+    <span>Not investment advice. Tokens launched here are permissionless and unvetted.</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  // Point this at your deployed API. Same-origin by default.
+  const API_BASE = '';
+  const BOT = '@tagonlong';
+  const EXPLORER = 'https://robinhoodchain.blockscout.com';
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const short = (a) => (a && a.length > 12) ? a.slice(0, 6) + '…' + a.slice(-4) : (a || '—');
+  const now = () => Math.floor(Date.now() / 1000);
+
+  // ---------- theme ----------
+  const root = document.documentElement;
+  try {
+    const saved = localStorage.getItem('tagonlong_theme');
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+  } catch (e) { /* private window — the OS theme still applies */ }
+
+  $('themeBtn').addEventListener('click', () => {
+    const current = root.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('tagonlong_theme', next); } catch (e) { /* not essential */ }
+  });
+
+  // ---------- composer ----------
+  // Both modes mirror the backend parser, so anything this builds is something
+  // the bot accepts. If you change the parser, change these too.
+
+  let mode = 'launch';
+  const nameEl = $('tokenName');
+  const tickEl = $('tokenTicker');
+  const addrEl = $('payoutAddress');
+
+  function setMode(next) {
+    mode = next;
+    $('modeLaunch').setAttribute('aria-selected', String(next === 'launch'));
+    $('modeClaim').setAttribute('aria-selected', String(next === 'claim'));
+    $('launchFields').hidden = next !== 'launch';
+    $('claimFields').hidden = next !== 'claim';
+    render();
+  }
+
+  $('modeLaunch').addEventListener('click', () => setMode('launch'));
+  $('modeClaim').addEventListener('click', () => setMode('claim'));
+
+  function validateLaunch(name, ticker) {
+    if (name.length < 2) return 'Token name needs at least 2 characters.';
+    if (/[\u0000-\u001F‪-‮⁦-⁩]/.test(name)) return 'That name contains characters the parser refuses.';
+    if (!ticker) return 'Add a ticker.';
+    if (!/^[A-Z][A-Z0-9]{1,9}$/.test(ticker)) return 'Ticker must be 2–10 letters or digits, starting with a letter.';
+    return null;
+  }
+
+  function validateClaim(address) {
+    if (!address) return 'Add the address you want your fees paid to.';
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) return 'That is not a valid address. It should be 0x followed by 40 characters.';
+    return null;
+  }
+
+  function postText() {
+    if (mode === 'claim') return BOT + ' claim ' + addrEl.value.trim();
+    return BOT + ' launch "' + nameEl.value.trim() + '" $' + tickEl.value.trim().toUpperCase();
+  }
+
+  function render() {
+    let problem;
+    if (mode === 'claim') {
+      const address = addrEl.value.trim();
+      problem = validateClaim(address);
+      $('preview').innerHTML =
+        '<span class="handle">' + BOT + '</span> claim ' +
+        '<span class="tick">' + esc(address || '0x…') + '</span>';
+      $('hint').textContent = problem
+        || 'Valid. Post this from the account whose fees you are claiming — that is what proves it is yours.';
+    } else {
+      const name = nameEl.value.trim();
+      const ticker = tickEl.value.trim().toUpperCase();
+      problem = validateLaunch(name, ticker);
+      $('preview').innerHTML =
+        '<span class="handle">' + BOT + '</span> launch "' + esc(name || '…') +
+        '" <span class="tick">$' + esc(ticker || '…') + '</span>';
+      $('hint').textContent = problem || 'Valid. Post this and the bot picks it up within about a minute.';
+    }
+
+    $('hint').classList.toggle('bad', Boolean(problem));
+    $('copyBtn').disabled = Boolean(problem);
+  }
+
+  $('copyBtn').addEventListener('click', async () => {
+    const btn = $('copyBtn');
+    try {
+      await navigator.clipboard.writeText(postText());
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = 'Copy this post'; }, 1600);
+    } catch (e) {
+      btn.textContent = 'Select and copy the text above';
+      setTimeout(() => { btn.textContent = 'Copy this post'; }, 2400);
+    }
+  });
+
+  $('feesBtn').addEventListener('click', () => {
+    $('custody').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  [nameEl, tickEl, addrEl].forEach((el) => el.addEventListener('input', render));
+
+  // ---------- launches ----------
+  // Live data only. When there is nothing to show, the page says so rather than
+  // filling the space with invented tokens — a launchpad that displays fake
+  // launches teaches people to distrust the real ones.
+
+  let tokens = [];
+
+  const isClosed = (t) => t.epochEnd ? now() >= Number(t.epochEnd) : false;
+
+  function stateBlock(title, body) {
+    return '<div class="state-block"><h3>' + esc(title) + '</h3><p>' + body + '</p></div>';
+  }
+
+  function renderTokens() {
+    const host = $('tokensHost');
+
+    if (tokens.length === 0) {
+      host.innerHTML = stateBlock(
+        'No launches yet',
+        'Nothing has been deployed through the Long.xyz factory that this indexer has seen. ' +
+        'Tokens appear here automatically as they are created.');
+      return;
+    }
+
+    host.innerHTML = '<div class="tokens">' + tokens.map((t, i) => {
+      const closed = isClosed(t);
+      return '<article class="token" tabindex="0" role="button" data-i="' + i + '">' +
+        '<div class="token-top">' +
+          '<div>' +
+            '<div class="token-name">' + esc(t.name || 'Unnamed') + '</div>' +
+            '<div class="token-by">' +
+              (t.handle ? '@' + esc(t.handle) : '<span class="mono">' + short(t.creator) + '</span>') +
+            '</div>' +
+          '</div>' +
+          '<span class="ticker">$' + esc(t.symbol || '???') + '</span>' +
+        '</div>' +
+        '<div class="token-foot">' +
+          '<span class="state ' + (closed ? 'settled' : 'running') + '"><i></i>' +
+            (closed ? 'CLOSED' : 'OPEN') + '</span>' +
+          '<span>' + (t.viaPlatform ? 'via TagOnLong' : 'external') + '</span>' +
+        '</div>' +
+      '</article>';
+    }).join('') + '</div>';
+  }
+
+  function renderBoard() {
+    const host = $('boardHost');
+    const withHandles = tokens.filter((t) => t.handle);
+
+    if (withHandles.length === 0) {
+      host.innerHTML = stateBlock(
+        'No claimed creators yet',
+        'Creators show up here once they have tagged the bot with ' +
+        '<code>claim 0xYourAddress</code>, which links their handle to an address.');
+      return;
+    }
+
+    const counts = new Map();
+    for (const t of withHandles) {
+      const entry = counts.get(t.handle) || { handle: t.handle, creator: t.creator, n: 0 };
+      entry.n += 1;
+      counts.set(t.handle, entry);
+    }
+    const rows = [...counts.values()].sort((a, b) => b.n - a.n).slice(0, 10);
+
+    host.innerHTML = '<div class="board">' + rows.map((r, i) =>
+      '<div class="boardrow">' +
+        '<span class="rank">' + String(i + 1).padStart(2, '0') + '</span>' +
+        '<span class="who">@' + esc(r.handle) + '</span>' +
+        '<span class="addr">' + short(r.creator) + '</span>' +
+        '<span class="num">' + r.n + '</span>' +
+      '</div>').join('') + '</div>';
+  }
+
+  // ---------- token detail ----------
+
+  const sheet = $('sheet');
+  let sheetAddress = null;
+
+  function fact(label, value) {
+    if (!value) return '';
+    return '<div class="fact"><dt>' + esc(label) + '</dt><dd>' + value + '</dd></div>';
+  }
+
+  function link(address) {
+    if (!address || /^0x0{40}$/i.test(address)) return null;
+    return '<a href="' + EXPLORER + '/address/' + esc(address) + '" target="_blank" rel="noopener">' +
+      esc(address) + '</a>';
+  }
+
+  function openSheet(t) {
+    sheetAddress = t.assetAddress || null;
+    const closed = isClosed(t);
+
+    $('sheetName').textContent = (t.name || 'Unnamed') + (t.symbol ? '  $' + t.symbol : '');
+    $('sheetBy').textContent = t.handle
+      ? 'Launched by @' + t.handle
+      : 'Launched by ' + short(t.creator);
+
+    // Only fields the indexer actually resolved. An empty row is left out
+    // rather than shown as a dash, so what is here is what is known.
+    $('sheetFacts').innerHTML =
+      fact('Status', closed
+        ? '<span class="state settled"><i></i>CLOSED</span>'
+        : '<span class="state running"><i></i>OPEN</span>') +
+      fact('Contract', link(t.assetAddress)) +
+      fact('Creator', link(t.creator)) +
+      fact('Pool', t.poolId ? esc(t.poolId) : null) +
+      fact('Quote asset', link(t.numeraire)) +
+      fact('Hook', link(t.hook)) +
+      fact('Governance', link(t.governance)) +
+      fact('Timelock', link(t.timelock)) +
+      fact('Source', t.viaPlatform ? 'Launched through TagOnLong' : 'Launched outside TagOnLong');
+
+    $('sheetExplorer').href = t.assetAddress
+      ? EXPLORER + '/address/' + t.assetAddress
+      : EXPLORER;
+
+    if (typeof sheet.showModal === 'function') sheet.showModal();
+  }
+
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.token');
+    if (card && card.dataset.i) openSheet(tokens[Number(card.dataset.i)]);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest && e.target.closest('.token');
+    if (card && card.dataset.i) {
+      e.preventDefault();
+      openSheet(tokens[Number(card.dataset.i)]);
+    }
+  });
+
+  $('sheetClose').addEventListener('click', () => sheet.close());
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.close(); });
+
+  $('sheetCopy').addEventListener('click', async () => {
+    if (!sheetAddress) return;
+    const btn = $('sheetCopy');
+    try {
+      await navigator.clipboard.writeText(sheetAddress);
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = 'Copy address'; }, 1600);
+    } catch (e) {
+      btn.textContent = 'Copy failed';
+      setTimeout(() => { btn.textContent = 'Copy address'; }, 1600);
+    }
+  });
+
+  // ---------- data ----------
+
+  async function load() {
+    try {
+      const res = await fetch(API_BASE + '/api/launches?take=24', {
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const rows = await res.json();
+
+      // The API nests the creator's handle under xAccount and returns bigints
+      // as strings. Normalise once here so every renderer reads one shape.
+      tokens = (Array.isArray(rows) ? rows : []).map((r) => ({
+        assetAddress: r.assetAddress,
+        name: r.name,
+        symbol: r.symbol,
+        creator: r.creator,
+        handle: r.xAccount ? r.xAccount.handle : null,
+        epochEnd: r.epochEnd ? Number(r.epochEnd) : null,
+        viaPlatform: Boolean(r.viaPlatform),
+        poolId: r.poolId,
+        numeraire: r.numeraire,
+        hook: r.hook,
+        governance: r.governance,
+        timelock: r.timelock,
+      }));
+
+      renderTokens();
+      renderBoard();
+    } catch (e) {
+      $('tokensHost').innerHTML = stateBlock(
+        'Launches are not loading',
+        'The indexer API did not answer. It may still be starting up, or ' +
+        '<code>API_BASE</code> may need to point at your deployment.');
+      $('boardHost').innerHTML = '';
+    }
+  }
+
+  // ---------- claim ----------
+  // The bot replies with /?claim=<xUserId>. Read the attestation it stored and
+  // show the creator exactly what to send. The transaction is theirs to make —
+  // the platform only signed the attestation, which cannot move funds.
+  async function showClaim() {
+    const xUserId = new URLSearchParams(location.search).get('claim');
+    if (!xUserId) return;
+
+    try {
+      const res = await fetch(API_BASE + '/api/claim/' + encodeURIComponent(xUserId));
+      const body = await res.json();
+
+      const host = document.getElementById('tokensHost');
+      if (!res.ok) {
+        host.insertAdjacentHTML('beforebegin', stateBlock('Claim not ready', esc(body.error || '')));
+        return;
+      }
+
+      document.querySelector('.hero').insertAdjacentHTML('beforeend',
+        '<div class="custody" style="margin-top:28px">' +
+          '<h2>Claim your fees</h2>' +
+          '<p>Send one transaction from <span class="mono">' + short(body.owner) + '</span> ' +
+          'to bind your vault. Nothing here can move your funds — this only names ' +
+          'the address you already asked for in public.</p>' +
+          '<dl class="facts" style="padding:12px 0 0">' +
+            '<div class="fact"><dt>Your vault</dt><dd>' + esc(body.vault) + '</dd></div>' +
+            '<div class="fact"><dt>Pays out to</dt><dd>' + esc(body.owner) + '</dd></div>' +
+            '<div class="fact"><dt>Contract</dt><dd>' + esc(body.factory || 'not configured') + '</dd></div>' +
+            '<div class="fact"><dt>Call</dt><dd>bindOwner(string,address,uint256,uint256,bytes)</dd></div>' +
+          '</dl>' +
+          '<div class="btnrow" style="margin-top:16px">' +
+            '<button class="btn" id="claimBtn">Send from my wallet</button>' +
+          '</div>' +
+          '<div class="hint" id="claimHint" style="margin-top:10px"></div>' +
+        '</div>');
+
+      document.getElementById('claimBtn').addEventListener('click', async () => {
+        const hint = document.getElementById('claimHint');
+        if (!window.ethereum) { hint.textContent = 'No wallet found in this browser.'; return; }
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x' + Number(body.chainId).toString(16) }],
+          }).catch(() => {});
+          hint.textContent = 'Confirm the transaction in your wallet.';
+        } catch (e) {
+          hint.textContent = e && e.message ? e.message : 'Could not reach your wallet.';
+        }
+      });
+    } catch (e) {
+      // The claim panel is additive; the rest of the page still works without it.
+    }
+  }
+
+  // ---------- boot ----------
+  render();
+  showClaim();
+  load();
+  setInterval(load, 60000);
+})();
+</script>
